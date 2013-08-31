@@ -49,7 +49,11 @@ $(document).ready(function() {
     
     // fretboard
     var fretboard = $(".fretboard:first");
-    fretboard.fretboard({tuning: localStorage.getItem("tuning") || "E,B,G,D,A,E"});
+    fretboard.fretboard({
+        tuning: localStorage.getItem("tuning") || "E,B,G,D,A,E",
+        root: localStorage.getItem("root") || "C",
+        scale: localStorage.getItem("scale") || "Major"
+    });
     
     // root controls
     var selectedRoot = $(".control .selected-root");
@@ -66,17 +70,16 @@ $(document).ready(function() {
         
     });
     rootListPanel.find(".close-button").bind("click touchstart", function(event){
-        rootList.removeClass("visible");
+        rootListPanel.removeClass("visible");
     });
     
     var rootList = $(".root-list ul");
     rootList.bind("listpickerchanged", function(event, data){
         selectedRoot.html("<div>{0}</div>".format(data.selectedLabel));
-        //fretboard.fretboard({root: root, scale: data.selectedValue})
-        //invalidateScale(selectedRootNote, selectedScaleInterval, null);
-        localStorage.setItem("selectedRoot", data.selectedLabel);
+        fretboard.fretboard({root: data.selectedLabel});
+        localStorage.setItem("root", data.selectedLabel);
     });
-    rootList.listpicker({selectedLabel: localStorage.getItem("selectedRoot") || "C"});
+    rootList.listpicker({selectedLabel: localStorage.getItem("root") || "C"});
  
     // scale controls
     var selectedScale = $(".selected-scale");
@@ -98,11 +101,10 @@ $(document).ready(function() {
     var scaleList = $(".scale-list ul");
     scaleList.bind("listpickerchanged", function(event, data){
         selectedScale.html("{0}".format(data.selectedLabel));
-        //fretboard.fretboard({root: root, scale: data.selectedValue})
-        //invalidateScale(selectedRootNote, selectedScaleInterval, event.target.textContent);
-        localStorage.setItem("selectedScale", data.selectedLabel);
+        fretboard.fretboard({scale: data.selectedLabel});
+        localStorage.setItem("scale", data.selectedLabel);
     });
-    scaleList.listpicker({valueProperty: "interval", selectedLabel: localStorage.getItem("selectedScale") || "Major"});
+    scaleList.listpicker({valueProperty: "interval", selectedLabel: localStorage.getItem("scale") || "Major"});
    
     // tuning controls
     var tuningControl = $(".tuning-control:first");
@@ -178,7 +180,7 @@ $(document).ready(function() {
         options: {
             tuning: ["E","B","G","D","A","E"],
             root: "C",
-            scale: "Major", // [2,2,1,2,2,2]
+            scale: "Major", 
             //code: "C",
         },
         
@@ -196,6 +198,12 @@ $(document).ready(function() {
                 this.options.tuning = this.options.tuning.split(",");
             }
             
+            this._buildFretboard(this.options.tuning);
+            
+            this._setScale(this.options.root, this.options.scale);
+        },
+        
+        _buildFretboard: function(tuning) {
             var maxStrings = 6;
             var maxFrets = 24;
             
@@ -208,7 +216,6 @@ $(document).ready(function() {
                 //} else {
                 //  fret = $('<div class="fret fret-{0}" style="width:{1}px"></div>'.format(i, 100 - i*2));
                 //}
-                
                 
                 // append dot
                 if(i==3 || i==5 || i==7 || i==9 || i==15 || i==17 || i==19 || i==21) {
@@ -257,14 +264,31 @@ $(document).ready(function() {
             }
             this._container.append(strings);
             
-            this._setScale(this.options.root, scaleInterval["Major"]);
-            
-            console.log(scale);
+            for(var i=0; i<this._chords.length; i++) {
+                var chord = this._chords[i];
+                this._noteElements[chord] = $(".fretboard .note-{0}".format(chord.replace("#","S")));
+            }
+        },
+        
+        _scaleInterval: {
+            "Major": [2,2,1,2,2,2],
+            "Natural Minor":  [2,1,2,2,1,2],
+            "Harmonic Minor": [2,1,2,2,1,3],
+            "Melodic Minor":  [2,1,2,2,2,2],
+            "Whole Tone": [2,2,2,2,2],
+            "Diminished": [2,1,2,1,2,1,2],
+            "Chromatic":  [1,1,1,1,1,1,1,1,1,1,1],
+            "Major Pentatonic": [2,2,3,2],
+            "Minor Pentatonic": [3,2,2,3],
+            "Spanish":   [1,2,1,1,2,1,2],
+            "Hungarian": [2,1,3,1,2,2],
+            "Spanish Gypsy":   [1,3,1,2,1,3,1],
+            "Hungarian Gypsy": [2,1,3,1,1,2,2]
         },
         
         _setScale: function(root, scale) {
             // select notes of scale
-            var interval = [2,2,1,2,2,2];
+            var interval = this._scaleInterval[this.options.scale];
             var scale = new Array();
             scale[0] = this.options.root;
             var chordIndexOffset = this._chords.indexOf(this.options.root);
@@ -277,7 +301,8 @@ $(document).ready(function() {
             // set class for notes
             for(var i=0; i<this._chords.length; i++) {
                 var chord = this._chords[i];
-                this._noteElements[chord] = $(".fretboard .note-{0}".format(chord.replace("#","S")));
+                
+                this._noteElements[chord].removeClass("root");
                 
                 if(scale.contains(chord)) {
                     this._noteElements[chord].removeClass("not-scale");   
@@ -286,86 +311,26 @@ $(document).ready(function() {
                 }
             }
             this._noteElements[this.options.root].addClass("root");
-            //window.noteElements = this._noteElements;
         },
-        
-      
         
         _setOption: function( key, value ) {
             //console.log("{0}-{1} _setOption".format(this.widgetFullName, this.uuid));
             switch(key) {
                 case "tuning":
-                    if(value && this._children.index(value) > -1) {
-                        this._onSelectedItemChanged(value);
-                    }
+                    this.options.tuning = (value instanceof Array) ? value : value.split(",");
+                    this._buildFretboard(this.options.tuning);
+                    this._setScale(this.options.root, this.options.scale);
                     break;
                 case "root":
-                    if(value > -1 && this._children[value]) {
-                        this._onSelectedItemChanged(this._children[value]);
-                    }
+                    this.options.root = value;
+                    this._setScale(this.options.root, this.options.scale);
                     break;
                 case "scale":
-                    if(value != "") {
-                        var self = this; 
-                        self._children.each(function(){
-                            if($(this)[0].textContent == value) {
-                                self._onSelectedItemChanged($(this));
-                            }
-                        });
-                    }
+                    this.options.scale = value;
+                    this._setScale(this.options.root, this.options.scale);
                     break;
             }
         },
-        
-        /*
-        // Fretboard ~ 
-        var invalidateScale = function(root, interval, scaleName) {
-            // update selected state
-            selectedRoot.html("<div>{0}</div>".format(root));
-            rootList.find(".note").removeClass("selected");
-            rootList.find(".note-{0}".format(root.replace("#","S"))).addClass("selected");
-            
-            if(scaleName) {
-                selectedScale.html("{0}".format(scaleName));
-                scaleList.find("li").removeClass("selected");
-                //scaleList.find("li:contains({0})".format(scaleName)).addClass("selected");
-                scaleList.find("li").filter(function (){
-                    return $(this).text() == scaleName;
-                }).addClass("selected");
-            }
-            
-            //rootList.find(".note-{0}".format(root.replace("#","S"))).addClass("selected");
-            
-            var notes = $(".fretboard .note");
-            notes.removeClass("root");
-            notes.removeClass("not-scale");
-    
-            var rootNote = $(".fretboard .note-{0}".format(root.replace("#","S")));
-            rootNote.addClass("root");
-            //console.log(".note-{0}".format(root));
-            
-            //var scale = [];
-            var scale = new Array();
-            scale[0] = root;
-            var chordIndexOffset = chords.indexOf(root);
-            var intervalFromRoot = 0;
-            for(var i=0; i<interval.length; i++) {
-                intervalFromRoot += interval[i];
-                scale[i + 1] = chords[(chordIndexOffset + intervalFromRoot) % chords.length];
-            }
-            
-            for(var i=0; i<chords.length; i++) {
-                var chord = chords[i];
-                if(!scale.contains(chord)) {
-                    $(".fretboard .note-{0}".format(chord.replace("#","S"))).addClass("not-scale");   
-                }
-            }
-        };
-    
-        // build first scale
-        invalidateScale(selectedRootNote, selectedScaleInterval, "Major"); // C Major
-        // ~ Fretboard
-        */
     });
     
     $.widget.bridge("hm_fretboard", $.hm.fretboard);
