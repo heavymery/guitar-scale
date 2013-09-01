@@ -54,6 +54,7 @@ $(document).ready(function() {
         root: localStorage.getItem("root") || "C",
         scale: localStorage.getItem("scale") || "Major"
     });
+    fretboard.flickable();
     
     // root controls
     var selectedRoot = $(".control .selected-root");
@@ -133,11 +134,13 @@ $(document).ready(function() {
                         //console.log(currentTuning[tuningKnobsIndex]);
                         codeList.drumpicker({selectedLabel: currentTuning[tuningKnobsIndex]});
                     
-                        $(this).find(".tune-up-button").bind("click touchstart", function(event){
-                            codeList.drumpicker("next")
+                        $(this).find(".tune-up-button").bind("touchstart click", function(){
+                            event.preventDefault();
+                            codeList.drumpicker("next");
                         });
-                        $(this).find(".tune-down-button").bind("click touchstart", function(event){
-                            codeList.drumpicker("previous")
+                        $(this).find(".tune-down-button").bind("touchstart click", function(){
+                            event.preventDefault();
+                            codeList.drumpicker("previous");
                         });
                         }
                 });
@@ -156,6 +159,8 @@ $(document).ready(function() {
                 });
                 //console.log(currentTuning);
                 //$(".tuning-knob .code-list").drumpicker();
+                
+                isTuningKnobInitialized = true;
             }
         }
     });

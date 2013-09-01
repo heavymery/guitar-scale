@@ -1331,138 +1331,98 @@ var hatebuCount = function (target, url) {
 (function($){
     
     $.widget( "hm.flickable", {
-        _create: function() {
-            // Fretboard movable ~
-            var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-            var transX = matrix.transX;
-            var speed = 1;
-            var accel = 1;
-        
-            function step(timestamp) {
-                if (Math.floor(speed) != 0 && !startPoint && (transX > minTransX && transX < maxTransX)) {
-                    speed += accel;
-                    transX += speed;
-                    
-                    fretboard.css(Modernizr.prefixed("transform"), 
-                                "translate3d({0}px,{1}px,0) scale({2},{2})"
-                                .format(transX, matrix.transY, fretboardZoomRate));
-        
-                //console.log(Math.round(timestamp/1000));
-        
-                
-                    requestAnimationFrame(arguments.callee);
-                } else if(transX > maxTransX) {
-                    matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-                    fretboard.addClass("transition");
-                    fretboard.css(Modernizr.prefixed("transform"), 
-                        "translate3d({0}px,{1}px,0) scale({2},{2})"
-                        .format(maxTransX, matrix.transY, fretboardZoomRate));
-                        
-                    if(!(tuningControl.find(".tuning-panel")).hasClass("visible")) {
-                        tuningControl.removeClass("hide");
-                    }
-                } else if(transX < minTransX) {
-                    matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-                    fretboard.addClass("transition");
-                    fretboard.css(Modernizr.prefixed("transform"), 
-                        "translate3d({0}px,{1}px,0) scale({2},{2})"
-                        .format(minTransX, matrix.transY, fretboardZoomRate));
-                    
-                    if(!(tuningControl.find(".tuning-panel")).hasClass("visible")) {
-                        tuningControl.addClass("hide");
-                    }    
-                    
-                }
-            }
-               
-            var minTransX = - fretboard.outerWidth() + getDocumentSize().x - 110;
-            var maxTransX = 0;
+        options: {
             
-            var startPoint;
-            var startTime;
-            fretboard.bind("mousedown touchstart", function() {
-                var point = getPoint(event);
-                startPoint = point;
-                startTime = Date.now();
-                //console.log(event.type, point);
+        },
+        
+        _create: function() {
+            //console.log("{0}-{1} _create".format(this.widgetFullName, this.uuid));
+            //return;
+            //console.log(this);
+            this.element.transform3d();
+            
+            var self = this;
+            this.element.bind("mousedown touchstart", function(){
+                var point = $.hm.getPoint(event);
+                self._moveStartPoint = point;
+                self._moveStartTime = Date.now();
+                self._moveStartTransX = self.element.transform3d("option", "transX");
                 
-                fretboard.removeClass("transition");
-                
-                startMatrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-                //console.log(startMatrix);
+                self.element.removeClass("transition");
             });
             
-            $(document).bind("mousemove touchmove", function() {
+            $(document).bind("mousemove touchmove", function(){
                 if(event.touches && event.touches.length > 1) {
                     return;
                 };
                 
-                var point = getPoint(event);
+                var point = $.hm.getPoint(event);
                 
-                if(startPoint) {
+                if(self._moveStartPoint) {
                     var delta = {
-                        x:point.x - startPoint.x,
-                        y:point.y - startPoint.y  
+                        x:point.x - self._moveStartPoint.x,
+                        y:point.y - self._moveStartPoint.y  
                     };
                     
-                    var transX = parseInt(startMatrix.transX) + delta.x;
-                    var transY = startMatrix.transY;
+                    self.element.transform3d({
+                        transX: delta.x + self._moveStartTransX
+                    });
                     
-                    var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-                    fretboard.css(Modernizr.prefixed("transform"), 
-                        "translate3d({0}px,{1}px,0) scale({2},{3})"
-                        .format(transX, transY, matrix.scaleX, matrix.scaleY));
                         
-                    if(!(tuningControl.find(".tuning-panel")).hasClass("visible")) {
-                        if(transX < -10) {
+                    /*if(!(tuningControl.find(".tuning-panel")).hasClass("visible")) {
+                        if(this.element.transform3d("option", "transX") < -10) {
                             tuningControl.addClass("hide");
                         } else {
                             tuningControl.removeClass("hide");
                         }
-                    }
+                    }*/
                 }
             });
             
-            $(document).bind("mouseup touchend", function() {
-                if(startPoint) {
+            $(document).bind("mouseup touchend", function(){
+                if(self._moveStartPoint) {
                     if(event.touches && event.touches.length > 0) {
-                        startPoint = getPoint(event);
+                        self._moveStartPoint = getPoint(event);
                         return;    
                     }
                     
-                    var point = getPoint(event);
+                    var point = $.hm.getPoint(event);
                 
                     var delta = {
-                        x:point.x - startPoint.x,
-                        y:point.y - startPoint.y  
+                        x:point.x - self._moveStartPoint.x,
+                        y:point.y - self._moveStartPoint.y  
                     };
                     
-                    var time = Date.now() - startTime;
+                    var time = Date.now() - self._moveStartTime;
                     //console.log(delta.x / time);
                     
-                    startPoint = null;
+                    self._moveStartPoint = null;
                     
                     //minTransX = - fretboard.outerWidth() + getDocumentSize().x - 110;
-                    if(fretboardZoomRate >= 1) {
+                    if(self._zoomRate >= 1) {
                         //maxTransX = (fretboardZoomRate - 1) * (fretboard.outerWidth() + 110) / 2;
                     } else {
                         //maxTransX = 0;
                         //minTransX = - fretboard.outerWidth() + getDocumentSize().x - 110;
                     }
                     
-                    minTransX = - (fretboard.outerWidth() * fretboardZoomRate) + getDocumentSize().x - tuningControl.outerWidth(true) - 60;
+                    var transX = self.element.transform3d("option", "transX");
+                    var offset = self.element.offset();
+                    self._minTransX = 
+                        - (self.element.outerWidth() * self._zoomRate) 
+                        + getDocumentSize().x - (offset.left - transX);
+                        
+                    self._maxTransX = 
+                        (self._zoomRate - 1) * (self.element.outerWidth() + 110) / 2;
                 
-                    matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-                    if(matrix.transX > maxTransX) {
-                        fretboard.addClass("transition");
-                        fretboard.css(Modernizr.prefixed("transform"), 
-                            "translate3d({0}px,{1}px,0) scale({2},{2})"
-                            .format(maxTransX, matrix.transY, fretboardZoomRate));
-                    } else if(matrix.transX < minTransX) {
-                        fretboard.addClass("transition");
-                        fretboard.css(Modernizr.prefixed("transform"), 
-                            "translate3d({0}px,{1}px,0) scale({2},{2})"
-                            .format(minTransX, matrix.transY, fretboardZoomRate));
+                    var transX = self.element.transform3d("option", "transX");
+                    
+                    if(transX > self._maxTransX) {
+                        self.element.addClass("transition");
+                        self.element.transform3d({transX: self._maxTransX});
+                    } else if(transX < self._minTransX) {
+                        self.element.addClass("transition");
+                        self.element.transform3d({transX: self._minTransX});
                     } else {
                         //fretboard.addClass("transition");
                         //fretboard.css(Modernizr.prefixed("transform"), 
@@ -1480,110 +1440,190 @@ var hatebuCount = function (target, url) {
                         
                         //console.log(delta.x, time, speed);
                         
-                        transX = matrix.transX;
-                        
                         if(delta.x > 0) {
                             accel = -0.5;
                         } else {
                             accel = 0.5;
                         }
-                        requestAnimationFrame(step);
-                    }
-                    
-                    
-                }
-            });
-            // ~ Fretboard movable
-            
-            // Fretboard zoom control(mouse event)
-            fretboard.bind("dblclick", function(event){
-                event.preventDefault();
-                
-                //console.log("dblclick");
-                
-                if (event.shiftKey){
-                    if (event.altKey){
-                        fretboardZoomRate -= 0.1;
-                    } else {
-                        fretboardZoomRate -= 0.5;
-                    }
-                } else {
-                    if (event.altKey){
-                        fretboardZoomRate += 0.1;
-                    } else {
-                        fretboardZoomRate += 0.5;
-                    }
-                }   
-                
-                if(fretboardZoomRate < 0.25) {
-                    fretboardZoomRate = 0.25;
-                }
-                if(fretboardZoomRate > 2.0) {
-                    fretboardZoomRate = 2.0;
-                }
-                
-                if(!fretboard.hasClass("transition")) {
-                    fretboard.addClass("transition");
-                }
-                //fretboard.css(Modernizr.prefixed("transform"), "scale({0})".format(fretboardZoomRate));
-                //fretboard.css(Modernizr.prefixed("transform"), "scale3d({0},{0},{0})".format(fretboardZoomRate));
-                var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-                fretboard.css(Modernizr.prefixed("transform"), 
-                    //"scale({0},{0})"
-                    "translate3d({0}px,{1}px,0) scale({2},{2})"
-                    //.format(fretboardZoomRate));
-                    .format(matrix.transX, matrix.transY, fretboardZoomRate));
-            });
-            $(document).bind('mousewheel', function(event, delta, deltaX, deltaY) {
-                event.preventDefault();
-                if(fretboard.hasClass("transition")) {
-                    fretboard.removeClass("transition");
-                }
-                //console.log(delta, deltaX, deltaY);
-                var amount = delta / 100;
-                fretboardZoomRate += amount;
-                
-                fretboardZoomRate = fretboardZoomRate * 100;
-                //if(delta < 0) {
-                //    fretboardZoomRate = Math.floor(fretboardZoomRate);
-                //} else {
-                    fretboardZoomRate = Math.round(fretboardZoomRate);
-                //}
-                fretboardZoomRate = fretboardZoomRate / 100;
-                
-                if(fretboardZoomRate < 0.25) {
-                    fretboardZoomRate = 0.25;
-                }
-                if(fretboardZoomRate > 2.0) {
-                    fretboardZoomRate = 2.0;
-                }
-                //$("#header p").html(fretboardZoomRate);
-                
-                //fretboard.css(Modernizr.prefixed("transform"), "scale({0})".format(fretboardZoomRate));
-                //fretboard.css(Modernizr.prefixed("transform"), "scale3d({0},{0},{0})".format(fretboardZoomRate));
-                //fretboard.css(Modernizr.prefixed("transform"), 
-                //  "matrix({2},0,0,{2},{0},{1})"
-                //  .format(currentMatrix[4],currentMatrix[5],fretboardZoomRate));
                         
-                var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-                fretboard.css(Modernizr.prefixed("transform"), 
-                    "translate3d({0}px,{1}px,0) scale({2},{2})"
-                    .format(matrix.transX, matrix.transY, fretboardZoomRate));
+                        requestAnimationFrame(function(timestamp){
+                            if (Math.floor(speed) != 0 && !self._moveStartPoint) {
+                                
+                                var transX = self.element.transform3d("option", "transX");
+                                if(transX > self._minTransX && transX < self._maxTransX) {
+                                    speed += accel;
+                                    transX += speed;
+                                    
+                                    self.element.transform3d({transX: transX});
+                                    //console.log(Math.round(timestamp/1000));
+                                    requestAnimationFrame(arguments.callee);
+                                } else if(transX > self._maxTransX) {
+                                    self.element.addClass("transition");
+                                    self.element.transform3d({transX: self._maxTransX});
+                                } else if(transX < self._minTransX) {
+                                    self.element.addClass("transition");
+                                    self.element.transform3d({transX: self._minTransX});
+                                }
+                            }
+                        });
+                    }
+                    
+                    
+                }
             });
 
-    
-            var startZoomRate = 1;
-            window.addEventListener("gesturestart", function(event){
-                if(fretboard.hasClass("transition")) {
-                    fretboard.removeClass("transition");
-                }
+            /*this.element.bind("dblclick", this._dblClickHandler);
+            $(document).bind('mousewheel', this._mouseWheelHandler);
+
+            window.addEventListener("gesturestart", this._gestureStartHandler);
+            window.addEventListener("gesturechange", this._gestureChangeHandler);
+            
+            window.addEventListener("resize", this._resizeHandler);*/
+        },
+        
+        //_matrix: $.hm.getMatrix($(this.element).css(Modernizr.prefixed("transform"))),
+        //_transX: matrix.transX,
+        _speed: 1,
+        _accel: 1,
+        
+        _stepHandler: function(timestamp) {
+            if (Math.floor(speed) != 0 && !startPoint && (transX > minTransX && transX < maxTransX)) {
+                speed += accel;
+                transX += speed;
                 
-                startZoomRate = fretboardZoomRate;
-            });
-            window.addEventListener("gesturechange", function(event){
+                fretboard.css(Modernizr.prefixed("transform"), 
+                            "translate3d({0}px,{1}px,0) scale({2},{2})"
+                            .format(transX, matrix.transY, fretboardZoomRate));
+    
+                //console.log(Math.round(timestamp/1000));
+                requestAnimationFrame(arguments.callee);
+            } else if(transX > maxTransX) {
+                matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
+                fretboard.addClass("transition");
+                fretboard.css(Modernizr.prefixed("transform"), 
+                    "translate3d({0}px,{1}px,0) scale({2},{2})"
+                    .format(maxTransX, matrix.transY, fretboardZoomRate));
+                    
+                if(!(tuningControl.find(".tuning-panel")).hasClass("visible")) {
+                    tuningControl.removeClass("hide");
+                }
+            } else if(transX < minTransX) {
+                matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
+                fretboard.addClass("transition");
+                fretboard.css(Modernizr.prefixed("transform"), 
+                    "translate3d({0}px,{1}px,0) scale({2},{2})"
+                    .format(minTransX, matrix.transY, fretboardZoomRate));
+                
+                if(!(tuningControl.find(".tuning-panel")).hasClass("visible")) {
+                    tuningControl.addClass("hide");
+                }    
+            }
+        },
+        
+        //_minTransX: - fretboard.outerWidth() + getDocumentSize().x - 110,
+        _maxTransX: 0,
+        
+        _moveStartPoint: null,
+        
+        _moveStartTime: null,
+        
+        _moveStartTransX: 0,
+        
+        _minTransX: 0,
+        
+        _zoomRate: 1,
+        
+        /*
+        _dblClickHandler: function(event) {
+            event.preventDefault();
+                
+            //console.log("dblclick");
+            
+            if (event.shiftKey){
+                if (event.altKey){
+                    fretboardZoomRate -= 0.1;
+                } else {
+                    fretboardZoomRate -= 0.5;
+                }
+            } else {
+                if (event.altKey){
+                    fretboardZoomRate += 0.1;
+                } else {
+                    fretboardZoomRate += 0.5;
+                }
+            }   
+            
+            if(fretboardZoomRate < 0.25) {
+                fretboardZoomRate = 0.25;
+            }
+            if(fretboardZoomRate > 2.0) {
+                fretboardZoomRate = 2.0;
+            }
+            
+            if(!fretboard.hasClass("transition")) {
+                fretboard.addClass("transition");
+            }
+            //fretboard.css(Modernizr.prefixed("transform"), "scale({0})".format(fretboardZoomRate));
+            //fretboard.css(Modernizr.prefixed("transform"), "scale3d({0},{0},{0})".format(fretboardZoomRate));
+            var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
+            fretboard.css(Modernizr.prefixed("transform"), 
+                //"scale({0},{0})"
+                "translate3d({0}px,{1}px,0) scale({2},{2})"
+                //.format(fretboardZoomRate));
+                .format(matrix.transX, matrix.transY, fretboardZoomRate));    
+        },
+        
+        _mouseWheelHandler: function(event, delta, deltaX, deltaY) {
+            event.preventDefault();
+            if(fretboard.hasClass("transition")) {
+                fretboard.removeClass("transition");
+            }
+            //console.log(delta, deltaX, deltaY);
+            var amount = delta / 100;
+            fretboardZoomRate += amount;
+            
+            fretboardZoomRate = fretboardZoomRate * 100;
+            //if(delta < 0) {
+            //    fretboardZoomRate = Math.floor(fretboardZoomRate);
+            //} else {
+                fretboardZoomRate = Math.round(fretboardZoomRate);
+            //}
+            fretboardZoomRate = fretboardZoomRate / 100;
+            
+            if(fretboardZoomRate < 0.25) {
+                fretboardZoomRate = 0.25;
+            }
+            if(fretboardZoomRate > 2.0) {
+                fretboardZoomRate = 2.0;
+            }
+            //$("#header p").html(fretboardZoomRate);
+            
+            //fretboard.css(Modernizr.prefixed("transform"), "scale({0})".format(fretboardZoomRate));
+            //fretboard.css(Modernizr.prefixed("transform"), "scale3d({0},{0},{0})".format(fretboardZoomRate));
+            //fretboard.css(Modernizr.prefixed("transform"), 
+            //  "matrix({2},0,0,{2},{0},{1})"
+            //  .format(currentMatrix[4],currentMatrix[5],fretboardZoomRate));
+                    
+            var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
+            fretboard.css(Modernizr.prefixed("transform"), 
+                "translate3d({0}px,{1}px,0) scale({2},{2})"
+                .format(matrix.transX, matrix.transY, fretboardZoomRate));    
+        },
+        
+        _startZoomRate: 1,
+        
+        _gestureStartHandler: function(event) {
+            if(fretboard.hasClass("transition")) {
+                fretboard.removeClass("transition");
+            }
+            
+            this._startZoomRate = fretboardZoomRate;
+        },
+        
+        _gestureChangeHandler: function(event) {
                 event.preventDefault();
                 
-                fretboardZoomRate =  startZoomRate * event.scale;
+                fretboardZoomRate =  this._startZoomRate * event.scale;
                 
                 if(fretboardZoomRate < 0.25) {
                     fretboardZoomRate = 0.25;
@@ -1595,26 +1635,25 @@ var hatebuCount = function (target, url) {
                 var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
                 fretboard.css(Modernizr.prefixed("transform"), 
                     "translate3d({0}px,{1}px,0) scale({2},{2})"
-                    .format(matrix.transX, matrix.transY, fretboardZoomRate));
-            });
-            
-            var resizeEventTimer;
-            $(window).resize(function() {
-                //console.log("window.resize");
-              
-                clearTimeout(resizeEventTimer);
-                resizeEventTimer = setTimeout(function() {
-                    var minTransX = - fretboard.outerWidth() + getDocumentSize().x - 110;
-                    
-                    var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
-                    if(matrix.transX < minTransX) {
-                        fretboard.css(Modernizr.prefixed("transform"), 
-                            "translate3d({0}px,{1}px,0) scale({2},{2},1)"
-                            .format(minTransX, matrix.transY, fretboardZoomRate));
-                    }
-                }, 100);
-            });
+                    .format(matrix.transX, matrix.transY, fretboardZoomRate));            
         },
+
+        _resizeEventTimer: null,
+        
+        _resizeHandler: function(event) {
+            clearTimeout(this._resizeEventTimer);
+            this._resizeEventTimer = setTimeout(function() {
+                var minTransX = - fretboard.outerWidth() + getDocumentSize().x - 110;
+                
+                var matrix = getMatrix(fretboard.css(Modernizr.prefixed("transform")));
+                if(matrix.transX < minTransX) {
+                    fretboard.css(Modernizr.prefixed("transform"), 
+                        "translate3d({0}px,{1}px,0) scale({2},{2},1)"
+                        .format(minTransX, matrix.transY, fretboardZoomRate));
+                }
+            }, 100);
+        },
+        */
     });
     
     $.widget.bridge("hm_flickable", $.hm.flickable);

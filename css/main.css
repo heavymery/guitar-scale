@@ -297,14 +297,18 @@ html, body {
     content: "";
     display: block;
     width: 20px;
-    height: 101%;
     position: absolute;
     right: -15px;
     top: 0;
+    bottom: 0;
     background: 
-      -webkit-linear-gradient(90deg, rgba(80,80,80,.5) 0%,rgba(100,100,100,.5) 1%,rgba(100,100,100,.5) 99.5%, rgba(80,80,80,.5) 100%) no-repeat,
-      -webkit-linear-gradient(0deg, rgba(100,100,100,.8) 0%,rgba(100,100,100,1) 20%,rgba(100,100,100,1) 90%, rgba(20,20,20,1) 100%) no-repeat;
+    -webkit-linear-gradient(0deg, 
+        rgba(150,150,150,1) 0%,
+        rgba(180,180,180,1) 80%,
+        rgba(150,150,150,1) 90%, 
+        rgba(20,20,20,1) 100%) no-repeat;
      background-size: 100% 100%;
+     border-left: 1px solid #ccc;
 }
 .fretboard.transition {
     -webkit-transition: -webkit-transform .2s ease-out 0s;
@@ -356,16 +360,22 @@ html, body {
     border-right: none;
     padding-right: 10px;
     background: 
-        -webkit-linear-gradient(90deg, rgba(0,0,0,0) 0%,
-          rgba(0,0,0,0) 5.5%, rgba(0,0,0,.5) 6.5%, rgba(0,0,0,.8) 7%, rgba(0,0,0,.8) 10.0%, rgba(0,0,0,0) 11.5%,
-          rgba(0,0,0,0) 24.0%, rgba(0,0,0,.5) 24.5%, rgba(0,0,0,.8) 26.6%, rgba(0,0,0,.5) 27.5%, rgba(0,0,0,0) 29.0%,
-          rgba(0,0,0,0) 41.4%, rgba(0,0,0,.5) 41.5%, rgba(0,0,0,.8) 43.5%, rgba(0,0,0,0) 45.5%,
-          rgba(0,0,0,0) 58.5%, rgba(0,0,0,.8) 59.5%, rgba(0,0,0,0) 61.5%,
-          rgba(0,0,0,0) 74.5%, rgba(0,0,0,.8) 75.5%, rgba(0,0,0,0) 77.5%,
-          rgba(0,0,0,0) 90.5%, rgba(0,0,0,.8) 92%, rgba(0,0,0,0) 93.5%,
-          rgba(0,0,0,0) 100%) no-repeat,
-    -webkit-linear-gradient(90deg, rgba(40,40,40,.5) 0%,rgba(100,100,100,.5) 1%,rgba(100,100,100,.5) 99%, rgba(40,40,40,.5) 100%) no-repeat,
-    -webkit-linear-gradient(0deg, rgba(40,40,40,1) 0%,rgba(140,140,140,1) 10%,rgba(140,140,140,1) 40%, rgba(140,140,140,1) 100%) no-repeat;
+      -webkit-linear-gradient(90deg, rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0) 5.5%, rgba(0,0,0,.5) 6.5%, rgba(0,0,0,.8) 7%, rgba(0,0,0,.8) 10.0%, rgba(0,0,0,0) 11.5%,
+        rgba(0,0,0,0) 24.0%, rgba(0,0,0,.5) 24.5%, rgba(0,0,0,.8) 26.6%, rgba(0,0,0,.5) 27.5%, rgba(0,0,0,0) 29.0%,
+        rgba(0,0,0,0) 41.4%, rgba(0,0,0,.5) 41.5%, rgba(0,0,0,.8) 43.5%, rgba(0,0,0,0) 45.5%,
+        rgba(0,0,0,0) 58.5%, rgba(0,0,0,.8) 59.5%, rgba(0,0,0,0) 61.5%,
+        rgba(0,0,0,0) 74.5%, rgba(0,0,0,.8) 75.5%, rgba(0,0,0,0) 77.5%,
+        rgba(0,0,0,0) 90.5%, rgba(0,0,0,.8) 92%, rgba(0,0,0,0) 93.5%,
+        rgba(0,0,0,0) 100%) no-repeat,
+      -webkit-linear-gradient(90deg, 
+        rgba(100,100,100,.5) 0%,
+        rgba(100,100,100,.5) 100%) no-repeat,
+      -webkit-linear-gradient(0deg, 
+        rgba(40,40,40,1) 0%,
+        rgba(140,140,140,1) 10%,
+        rgba(140,140,140,1) 40%, 
+        rgba(140,140,140,1) 100%) no-repeat;
     background-size:10px 100%;
     background-position: right;
 }
@@ -379,7 +389,9 @@ html, body {
           rgba(0,0,0,0) 74.5%, rgba(0,0,0,.8) 75.5%, rgba(0,0,0,0) 77.5%,
           rgba(0,0,0,0) 90.5%, rgba(0,0,0,.8) 92%, rgba(0,0,0,0) 93.5%,
           rgba(0,0,0,0) 100%) no-repeat,
-        -webkit-linear-gradient(90deg, rgba(40,40,40,.5) 0%,rgba(100,100,100,.5) 1%,rgba(100,100,100,.5) 99%, rgba(40,40,40,.5) 100%) no-repeat,
+        -webkit-linear-gradient(90deg, 
+          rgba(100,100,100,.5) 0%,
+          rgba(100,100,100,.5) 100%) no-repeat,
         -webkit-linear-gradient(90deg, rgba(140,140,140,.5) 0%,rgba(240,240,240,.5) 5%,rgba(240,240,240,.5) 95%, rgba(140,140,140,.5) 100%) no-repeat,
         -webkit-linear-gradient(0deg, rgba(140,140,140,1) 0%,rgba(140,140,140,1) 60%, rgba(40,40,40,1) 100%) no-repeat,
         -webkit-linear-gradient(0deg, rgba(140,140,140,1) 0%,rgba(240,240,240,1) 40%, rgba(240,240,240,1) 100%) no-repeat;
