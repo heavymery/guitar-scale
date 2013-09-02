@@ -194,8 +194,7 @@ $(document).ready(function() {
             root: "C",
             scale: "Major", 
             maxStrings: 6,
-            maxFrets: 24,
-            //code: "C",
+            maxFrets: 24
         },
         
         _container: null,
@@ -348,7 +347,7 @@ $(document).ready(function() {
                     this._setScale(this.options.root, this.options.scale);
                     break;
             }
-        },
+        }
     });
     
     $.widget.bridge("hm_fretboard", $.hm.fretboard);

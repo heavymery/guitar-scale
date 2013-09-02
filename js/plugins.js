@@ -136,7 +136,7 @@ var getBrowserName = function() {
     } else {
         return undefined;
     }
-}
+};
 
 //----------------------------------
 //  Browser size, Scroll position
@@ -164,7 +164,7 @@ var getScreenSize = function() {
         return this.x + "x" + this.y + "(min-" + this.mx + "x" + this.my + ")";
     };
     return obj;
-}
+};
 
 /**
  * Get document size.
@@ -210,7 +210,7 @@ var openPopupWindow = function(url, width, height) {
     
     window.open(url,"_blank","toolbar=0,location=0,menubar=0," + 
                     "width={0},height={1},left={2},top={3}".format(width, height, left, top));
-}
+};
 
 //----------------------------------
 //  Touch gestures
@@ -230,18 +230,18 @@ var openPopupWindow = function(url, width, height) {
 var touchStartHandler = function(event) {
     $(this).attr("touchstarted","true");
     $(this).attr("touchmoved","false");
-}
+};
 
 var touchMoveHandler = function(event) {
     $(this).attr("touchmoved","true");
-}
+};
 
 var touchEndHandler = function(event, tapedHandler) {
     if(event.target.attr("touchmoved") != "true") {
         //console.log("tap");
         tapedHandler();
     }
-}
+};
 
 //----------------------------------
 //  Parse RSS feeds
@@ -444,7 +444,7 @@ var hatebuCount = function (target, url) {
         isMobile : (
             (userAgent.indexOf('iphone') > 0 && userAgent.indexOf('ipad') == -1) 
             || userAgent.indexOf('ipod') > 0 || userAgent.indexOf('android') > 0
-        ),
+        )
         
     });
     
@@ -1094,7 +1094,7 @@ var hatebuCount = function (target, url) {
                 selectedIndex: this.options.selectedIndex,
                 selectedIndex: this.options.selectedIndex,
                 selectedLabel: this.options.selectedLabel,
-                selectedValue: this.options.selectedValue,
+                selectedValue: this.options.selectedValue
             });
         },  
         
@@ -1214,7 +1214,7 @@ var hatebuCount = function (target, url) {
             selectedIndex: -1,
             selectedLabel: "",
             selectedValue: null,
-            valueProperty: null,
+            valueProperty: null
         },
         
         _container: null,
@@ -1264,7 +1264,7 @@ var hatebuCount = function (target, url) {
             this._trigger("changed", event, {
                 selectedItem : this.options.selectedItem,
                 selectedLabel: this.options.selectedLabel,
-                selectedValue: this.options.selectedValue,
+                selectedValue: this.options.selectedValue
             });
         },
         
@@ -1312,7 +1312,7 @@ var hatebuCount = function (target, url) {
                     }
                     break;
             }
-        },
+        }
     });
     
     $.widget.bridge("hm_listpicker", $.hm.drumpicker);
@@ -1531,7 +1531,7 @@ var hatebuCount = function (target, url) {
         
         _minTransX: 0,
         
-        _zoomRate: 1,
+        _zoomRate: 1
         
         /*
         _dblClickHandler: function(event) {
