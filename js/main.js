@@ -145,6 +145,7 @@ $(document).ready(function() {
                         }
                 });
                 
+                var tuningTimer;
                 var codeLists = $(".code-list");
                 codeLists.bind("drumpickerchanged",function(event, data){
                     //console.log(data);
@@ -156,6 +157,12 @@ $(document).ready(function() {
                     });
                     //console.log(currentTuning);
                     localStorage.setItem("tuning", currentTuning);
+                    
+                    clearTimeout(tuningTimer);
+                    tuningTimer = setTimeout(function(){
+                        fretboard.fretboard({tuning: currentTuning});
+                    }, 400); 
+                    
                 });
                 //console.log(currentTuning);
                 //$(".tuning-knob .code-list").drumpicker();
@@ -168,7 +175,7 @@ $(document).ready(function() {
     // show fretboard
     setTimeout(function(){
         fretboard.addClass("visible");
-    }, 200);
+    }, 400);
 
     // load sns share counts
     tweetCount($("#header div.twitter .sns-count-bubble"), 'http://guitar-scale.heavymery.net/');
@@ -186,6 +193,8 @@ $(document).ready(function() {
             tuning: ["E","B","G","D","A","E"],
             root: "C",
             scale: "Major", 
+            maxStrings: 6,
+            maxFrets: 24,
             //code: "C",
         },
         
@@ -197,7 +206,6 @@ $(document).ready(function() {
         
         _create: function() {
             this._container = this.element;
-            this._container.empty();
             
             if(!(this.options.tuning instanceof Array)) {
                 this.options.tuning = this.options.tuning.split(",");
@@ -208,13 +216,12 @@ $(document).ready(function() {
             this._setScale(this.options.root, this.options.scale);
         },
         
-        _buildFretboard: function(tuning) {
-            var maxStrings = 6;
-            var maxFrets = 24;
+        _buildFretboard: function() {
+            this._container.empty();
             
             // initialize fretboard
             var frets = $('<div class="frets"></div>');
-            for(var i=0; i<=maxFrets; i++) {
+            for(var i=0; i<=this.options.maxFrets; i++) {
                 var fret;
                 //if(i==0) {
                     fret = $('<div class="fret fret-{0}"></div>'.format(i));
@@ -235,43 +242,48 @@ $(document).ready(function() {
             
             // append strings
             var strings = $('<div class="strings"></div>');
-            for(var i=1; i<=maxStrings; i++){
+            for(var i=1; i<=this.options.maxStrings; i++){
                 var string = $('<div class="string string-{0}"></div>'.format(i));
-                //console.logtring);
-                
-                var openStringChord = this.options.tuning[i-1];
-                var chordIndexOffset = this._chords.indexOf(openStringChord);
-                
-                for(var j=0; j<=maxFrets; j++) {
-                    var fret;
-                    //if(j==0) {
-                        fret = $('<div class="fret fret-{0}"></div>'.format(j));
-                    //} else {
-                    //    fret = $('<div class="fret fret-{0}" style="width:{1}px"></div>'.format(j, 100 - j*2));
-                    //}
-                    
-                    var chord = this._chords[(chordIndexOffset + j) % this._chords.length];
-                    var note = $('<div class="note note-{1}">{0}</div>'.format(chord,chord.replace("#","S")));
-                    fret.append(note);
-                    
-                    //if(scale.contains(chord)) {
-                    //    if(chord == root) {
-                    //        note.addClass("root");
-                    //    }    
-                    //} else {
-                    //    note.addClass("not-scale");   
-                    //}
-                    
-                    string.append(fret);
-                }
-                
+                this._buildString(string, i);
                 strings.append(string);
+                this._strings.push(string);
             }
             this._container.append(strings);
             
             for(var i=0; i<this._chords.length; i++) {
                 var chord = this._chords[i];
                 this._noteElements[chord] = $(".fretboard .note-{0}".format(chord.replace("#","S")));
+            }
+        },
+        
+        _strings: [],
+        
+        _updateTuning: function(tuning){
+            for(var i=0; i<this.options.tuning.length; i++) {
+                if(this.options.tuning[i] != tuning[i]) {
+                    this._buildString(this._strings[i], i + 1);
+                }
+            }
+            
+            // TODO: tuning with no element rebuild. 
+            for(var i=0; i<this._chords.length; i++) {
+                var chord = this._chords[i];
+                this._noteElements[chord] = $(".fretboard .note-{0}".format(chord.replace("#","S")));
+            }
+        },
+        
+        _buildString: function(element, stringNumber){
+            element.empty();
+            
+            var openStringChord = this.options.tuning[stringNumber - 1];
+            var chordIndexOffset = this._chords.indexOf(openStringChord);
+            
+            for(var j=0; j<=this.options.maxFrets; j++) {
+                var fret = $('<div class="fret fret-{0}"></div>'.format(j));
+                var chord = this._chords[(chordIndexOffset + j) % this._chords.length];
+                var note = $('<div class="note note-{1}">{0}</div>'.format(chord,chord.replace("#","S")));
+                fret.append(note);
+                element.append(fret);
             }
         },
         
@@ -322,8 +334,9 @@ $(document).ready(function() {
             //console.log("{0}-{1} _setOption".format(this.widgetFullName, this.uuid));
             switch(key) {
                 case "tuning":
+                    var oldTuning = this.options.tuning;
                     this.options.tuning = (value instanceof Array) ? value : value.split(",");
-                    this._buildFretboard(this.options.tuning);
+                    this._updateTuning(oldTuning);
                     this._setScale(this.options.root, this.options.scale);
                     break;
                 case "root":
